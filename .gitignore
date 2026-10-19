@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+
+# Environment / secrets
+.env
+.env.local
+.env.production
+*.pem
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# ML artifacts (built by scripts, not committed)
+ml-service/data/corpus/*.jsonl
+ml-service/data/indexes/*
+!ml-service/data/indexes/.gitkeep
+ml-service/data/corpus/sample/*.jsonl
+ml-service/models/
+
+# Research experiment working dirs (results JSONs ARE committed)
+research/raw/
+ml-service/experiments/
+
+# Logs / OS
+*.log
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/

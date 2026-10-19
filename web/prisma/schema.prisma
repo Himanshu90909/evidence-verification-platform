@@ -1,0 +1,235 @@
+// Evidence Verification Platform - PostgreSQL schema (normalized).
+// All credentials come from DATABASE_URL (environment variable only).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Verdict {
+  SUPPORTED
+  REFUTED
+  NOT_ENOUGH_INFORMATION
+}
+
+enum NliLabel {
+  ENTAILMENT
+  CONTRADICTION
+  NEUTRAL
+}
+
+enum RetrievalMethod {
+  BM25
+  DENSE
+  HYBRID
+}
+
+enum RequestStatus {
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String?
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  claims       Claim[]
+  feedback     Feedback[]
+  auditLogs    AuditLog[]
+
+  @@index([createdAt])
+}
+
+model Claim {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verificationResults VerificationResult[]
+
+  @@unique([userId, text])
+  @@index([userId, createdAt])
+  @@index([text])
+}
+
+model ModelVersion {
+  id             String   @id @default(cuid())
+  name           String
+  version        String
+  embeddingModel String   @map("embedding_model")
+  nliModel       String   @map("nli_model")
+  retriever      String
+  nliBackend     String   @default("transformers") @map("nli_backend")
+  configHash     String   @map("config_hash")
+  temperature    Float    @default(1.0)
+  config         Json
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  verificationResults VerificationResult[]
+  experiments         Experiment[]
+
+  @@unique([name, version, configHash])
+  @@index([createdAt])
+}
+
+model VerificationResult {
+  id                 String           @id @default(cuid())
+  claimId            String           @map("claim_id")
+  modelVersionId     String           @map("model_version_id")
+  verdict            Verdict
+  confidence         Float
+  uncertainty        Float
+  status             RequestStatus     @default(COMPLETED)
+  errorMessage       String?          @map("error_message")
+  retrievalMethod    RetrievalMethod   @default(HYBRID) @map("retrieval_method")
+  topK               Int              @default(5) @map("top_k")
+  evidenceUsed       Int              @map("evidence_used")
+  retrievalLatencyMs Float            @map("retrieval_latency_ms")
+  nliLatencyMs       Float            @map("nli_latency_ms")
+  totalLatencyMs     Float            @map("total_latency_ms")
+  requestId          String           @unique
+  createdAt           DateTime         @default(now()) @map("created_at")
+
+  claim             Claim              @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  modelVersion      ModelVersion       @relation(fields: [modelVersionId], references: [id])
+  retrievalResults  RetrievalResult[]
+  nliPredictions    NliPrediction[]
+  feedback          Feedback[]
+
+  @@index([claimId, createdAt])
+  @@index([verdict])
+  @@index([modelVersionId])
+  @@index([createdAt])
+}
+
+model EvidenceSource {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  url         String?
+  description String?
+  license     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  evidence Evidence[]
+}
+
+model Evidence {
+  id         String   @id @default(cuid())
+  documentId String   @unique @map("document_id")
+  text       String
+  page       String?
+  lineId     Int?     @map("line_id")
+  sourceId   String   @map("source_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  source           EvidenceSource    @relation(fields: [sourceId], references: [id])
+  retrievalResults RetrievalResult[]
+  nliPredictions   NliPrediction[]
+
+  @@index([page])
+}
+
+model RetrievalResult {
+  id                   String   @id @default(cuid())
+  verificationResultId String   @map("verification_result_id")
+  evidenceId           String   @map("evidence_id")
+  method               RetrievalMethod
+  score                Float
+  rank                 Int
+  bm25Score            Float?   @map("bm25_score")
+  denseScore           Float?   @map("dense_score")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  verificationResult VerificationResult @relation(fields: [verificationResultId], references: [id], onDelete: Cascade)
+  evidence           Evidence           @relation(fields: [evidenceId], references: [id])
+
+  @@unique([verificationResultId, evidenceId])
+  @@index([evidenceId])
+}
+
+model NliPrediction {
+  id                   String   @id @default(cuid())
+  verificationResultId String   @map("verification_result_id")
+  evidenceId           String   @map("evidence_id")
+  label                NliLabel
+  entailmentProb       Float    @map("entailment_prob")
+  contradictionProb    Float    @map("contradiction_prob")
+  neutralProb          Float    @map("neutral_prob")
+  rank                 Int
+  isTopEvidence        Boolean  @default(false) @map("is_top_evidence")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  verificationResult VerificationResult @relation(fields: [verificationResultId], references: [id], onDelete: Cascade)
+  evidence           Evidence           @relation(fields: [evidenceId], references: [id])
+
+  @@unique([verificationResultId, evidenceId])
+  @@index([evidenceId])
+  @@index([label])
+}
+
+model Experiment {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  description    String
+  mode           String   @default("research")
+  dataset        String
+  metrics        Json
+  resultsPath    String   @map("results_path")
+  modelVersionId String?  @map("model_version_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  modelVersion ModelVersion? @relation(fields: [modelVersionId], references: [id])
+
+  @@index([createdAt])
+}
+
+model Feedback {
+  id                   String   @id @default(cuid())
+  userId               String   @map("user_id")
+  verificationResultId String?  @map("verification_result_id")
+  rating               Int
+  comment              String?
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verificationResult VerificationResult? @relation(fields: [verificationResultId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([verificationResultId])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?  @map("user_id")
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  statusCode   Int      @map("status_code")
+  latencyMs    Float?   @map("latency_ms")
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}

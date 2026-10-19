@@ -1,0 +1,48 @@
+# Local development stack: PostgreSQL + ML service.
+# The Next.js app runs with `npm run dev` (see README).
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: evp_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-evp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-evp_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-evidence_verification}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-evp}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ml-service:
+    build: ./ml-service
+    container_name: evp_ml_service
+    environment:
+      # Use the service key you generated (see README Security section)
+      ML_API_KEY: ${ML_API_KEY:-dev-service-key-change-me}
+      DATA_DIR: /data
+      CORPUS_PATH: /data/corpus/evidence_corpus.jsonl
+      INDEX_DIR: /data/indexes
+      EVIDENCE_SOURCE_NAME: "FEVER / Wikipedia (research corpus)"
+      NLI_MODEL: ${NLI_MODEL:-cross-encoder/nli-deberta-v3-small}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ml_data:/data
+      # Mount a prebuilt corpus/index if you have one, else the service
+      # builds them on first boot (requires network).
+      # - ./ml-service/data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  ml_data:
