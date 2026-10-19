@@ -196,6 +196,27 @@ docker run -d -p 8000:8000 -v evp_data:/data \
 - Deploy anywhere with Docker: Railway, Render, Fly.io, ECS, or a GPU-less VPS. Point `ML_API_URL` at its HTTPS endpoint and set the same key in `MODEL_SERVICE_KEY` on Vercel.
 - Paths are fully configurable via env (`CORPUS_PATH`, `INDEX_DIR`) — no hard-coded OS paths.
 
+### Hugging Face Spaces (recommended free option)
+
+The ML service ships a one-command deploy to a **private HF Space** (Docker SDK,
+free CPU tier, 16 GB RAM — plenty for this workload). The Space bundles the
+prebuilt corpus, BM25 index, and FAISS index, so first boot only downloads the
+transformer models (~2–4 min), never rebuilds indexes.
+
+```bash
+cd ml-service
+HF_TOKEN=hf_xxx MODEL_SERVICE_KEY=<shared-secret>   python3 scripts/deploy_hf_space.py
+```
+
+Then set in Vercel (Production **and** Preview):
+`ML_API_URL=https://<user>-evidence-verification-ml.hf.space`
+and `MODEL_SERVICE_KEY` to the same value passed above (or use the one the
+script generates). Redeploy the web app and `POST /api/verify` is live.
+
+> Free Spaces sleep after ~48 h of inactivity; the first request after sleep
+> takes a few minutes while models reload. Keep-alive ping (optional):
+> `curl -s https://<user>-evidence-verification-ml.hf.space/health` on a cron.
+
 ## 15. Environment variables
 
 | Variable | Where | Purpose |
