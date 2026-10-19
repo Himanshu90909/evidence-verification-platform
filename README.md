@@ -267,3 +267,16 @@ research/results/    actual experiment outputs (loaded by the Research dashboard
 scripts/             setup + research-sync helpers
 docker-compose.yml   local PostgreSQL + ML service stack
 ```
+
+## Deployment Status (live)
+
+| Component | Status | URL |
+|---|---|---|
+| Web app (Next.js) | **Deployed** (Vercel, project `evidence-verification-platform`) | https://evidence-verification-platform-live.vercel.app |
+| PostgreSQL | **Live** (Neon, dedicated `evidence_verification` schema, migrations + seed run in the Vercel build) | — |
+| ML service | **Ready to deploy** (Docker; see ML Deployment) — set `ML_API_URL` + `MODEL_SERVICE_KEY` in Vercel when hosted | — |
+
+Verified live (2026-10-19): all pages 200, auth (register/login/session) working,
+PostgreSQL reads/writes confirmed, research dashboard serving real FEVER
+experiment outputs via `/api/research/results`. The Eiffel Tower is a fine
+first claim once the ML service is up.
