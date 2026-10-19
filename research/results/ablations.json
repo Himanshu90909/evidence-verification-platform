@@ -1,0 +1,31 @@
+{
+  "n_claims": 100,
+  "retrieval_method": {
+    "bm25": {
+      "accuracy": 0.37,
+      "macro_f1": 0.299
+    },
+    "dense": {
+      "accuracy": 0.43,
+      "macro_f1": 0.3825
+    },
+    "hybrid": {
+      "accuracy": 0.47,
+      "macro_f1": 0.4431
+    }
+  },
+  "top_k": {
+    "3": {
+      "accuracy": 0.49,
+      "macro_f1": 0.4713
+    },
+    "5": {
+      "accuracy": 0.47,
+      "macro_f1": 0.4431
+    },
+    "10": {
+      "accuracy": 0.43,
+      "macro_f1": 0.3818
+    }
+  }
+}

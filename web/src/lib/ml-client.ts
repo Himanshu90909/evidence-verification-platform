@@ -15,6 +15,7 @@ export interface MlEvidence {
   rank: number;
   bm25_score?: number | null;
   dense_score?: number | null;
+  nli_label?: string | null;
 }
 
 export interface MlNliResult {

@@ -310,27 +310,30 @@ def main() -> None:
 
     # ------------------------------------------------- calibration (temperature scaling)
     print("[exp] calibration ...", flush=True)
-    agg_by_key = []
-    for row, gold in zip(raw_agg_rows, y_true):
-        # convert {"ENTAILMENT":..} to verdict-space probs
-        agg_by_key.append({k: row.get(v, 0.0) for k, v in PROB_KEYS.items()})
+    # raw_agg_rows are NLI-space dicts: ENTAILMENT / CONTRADICTION / NEUTRAL.
+    # Claims with no retrieved evidence have no probability row; exclude them
+    # from calibration (they are still counted in nli_eval as NEI predictions).
+    calib = [(row, gold) for row, gold in zip(raw_agg_rows, y_true) if row]
+    if not calib:
+        raise RuntimeError("No calibration rows available")
 
     def nll(T):
         total = 0.0
-        for agg, gold in zip(agg_by_key, y_true):
+        for agg, gold in calib:
             p = apply_temperature(agg, T)
-            total -= _m_log(p[gold])
-        return total / len(agg_by_key)
+            total -= _m_log(p[PROB_KEYS[gold]])
+        return total / len(calib)
 
     Ts = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0]
     best_T = min(Ts, key=nll)
-    verdicts_before = [decision(a, args.min_evidence_prob)[0] for a in agg_by_key]
-    verdicts_after = [decision(apply_temperature(a, best_T), args.min_evidence_prob)[0] for a in agg_by_key]
-    conf_before = [decision(a, args.min_evidence_prob)[1] for a in agg_by_key]
-    conf_after = [decision(apply_temperature(a, best_T), args.min_evidence_prob)[1] for a in agg_by_key]
+    verdicts_before = [decision(a, args.min_evidence_prob)[0] for a, _ in calib]
+    verdicts_after = [decision(apply_temperature(a, best_T), args.min_evidence_prob)[0] for a, _ in calib]
+    conf_before = [decision(a, args.min_evidence_prob)[1] for a, _ in calib]
+    conf_after = [decision(apply_temperature(a, best_T), args.min_evidence_prob)[1] for a, _ in calib]
+    golds_calib = [g for _, g in calib]
 
-    ece_before, _ = ece(conf_before, [v == g for v, g in zip(verdicts_before, y_true)])
-    ece_after, reliability = ece(conf_after, [v == g for v, g in zip(verdicts_after, y_true)])
+    ece_before, _ = ece(conf_before, [v == g for v, g in zip(verdicts_before, golds_calib)])
+    ece_after, reliability = ece(conf_after, [v == g for v, g in zip(verdicts_after, golds_calib)])
 
     calibration = {
         "temperature": best_T,
@@ -338,6 +341,7 @@ def main() -> None:
         "ece_after": round(ece_after, 4),
         "reliability_bins": reliability,
         "n_bins": 10,
+        "n_calibrated_claims": len(calib),
         "method": "temperature scaling fitted by minimum NLL on the evaluation sample (T grid search)",
         "note": "Deploy the fitted temperature via TEMPERATURE in the ML service environment.",
     }

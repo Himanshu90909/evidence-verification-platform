@@ -180,6 +180,11 @@ def verify(req: VerifyRequest, _: str = Depends(require_api_key)) -> VerifyRespo
         raise HTTPException(status_code=503, detail=f"Pipeline not ready: {service_state['detail']}")
     metrics.observe_request()
     result = pipeline.verify(req.claim, top_k=req.top_k, return_evidence=req.return_evidence)
+    nli_by_doc = {n["document_id"]: n["label"] for n in result.nli}
+    evidence_out = [
+        {**ev, "nli_label": nli_by_doc.get(ev["document_id"])}
+        for ev in result.evidence
+    ]
     return VerifyResponse(
         claim=result.claim,
         verdict=result.verdict,  # type: ignore[arg-type]
@@ -191,7 +196,7 @@ def verify(req: VerifyRequest, _: str = Depends(require_api_key)) -> VerifyRespo
             "latency_ms": result.stage_latencies_ms.get("retrieval", 0.0),
             "n_documents_searched": store.size,
         },
-        evidence=result.evidence,  # type: ignore[arg-type]
+        evidence=evidence_out,  # type: ignore[arg-type]
         nli=result.nli,  # type: ignore[arg-type]
         model=_model_meta(),
         latency_ms=result.latency_ms,

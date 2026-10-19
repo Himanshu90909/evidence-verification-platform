@@ -48,6 +48,7 @@ class Evidence(BaseModel):
     source_url: Optional[str] = None
     bm25_score: Optional[float] = None
     dense_score: Optional[float] = None
+    nli_label: Optional[str] = None
     rank: int
 
 

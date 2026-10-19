@@ -1,0 +1,27 @@
+{
+  "methods": {
+    "bm25": {
+      "recall@5": 0.5179024716098865,
+      "recall@10": 0.61062124248497,
+      "mrr@10": 0.3687064605401278,
+      "ndcg@10": 0.41751343475336733,
+      "mean_latency_ms": 88.7
+    },
+    "dense": {
+      "recall@5": 0.5117568470273881,
+      "recall@10": 0.5860387441549766,
+      "mrr@10": 0.39680233482838695,
+      "ndcg@10": 0.4319775691374613,
+      "mean_latency_ms": 21.21
+    },
+    "hybrid": {
+      "recall@5": 0.5548430193720775,
+      "recall@10": 0.6581162324649298,
+      "mrr@10": 0.4014409771924803,
+      "ndcg@10": 0.45359634224436035,
+      "mean_latency_ms": 109.92
+    }
+  },
+  "n_queries": 499,
+  "notes": "Gold evidence = FEVER annotated evidence sentences; NEI claims excluded (no gold evidence). Corpus = FEVER train+validation gold sentences."
+}

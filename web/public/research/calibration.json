@@ -1,0 +1,53 @@
+{
+  "temperature": 4.0,
+  "ece_before": 0.3217,
+  "ece_after": 0.1526,
+  "reliability_bins": [
+    {
+      "bin": "0.3-0.4",
+      "mean_confidence": 0.3755,
+      "accuracy": 0.4516,
+      "count": 31
+    },
+    {
+      "bin": "0.4-0.5",
+      "mean_confidence": 0.4544,
+      "accuracy": 0.5135,
+      "count": 74
+    },
+    {
+      "bin": "0.5-0.6",
+      "mean_confidence": 0.5398,
+      "accuracy": 0.5455,
+      "count": 33
+    },
+    {
+      "bin": "0.6-0.7",
+      "mean_confidence": 0.6564,
+      "accuracy": 0.5,
+      "count": 38
+    },
+    {
+      "bin": "0.7-0.8",
+      "mean_confidence": 0.7588,
+      "accuracy": 0.4648,
+      "count": 71
+    },
+    {
+      "bin": "0.8-0.9",
+      "mean_confidence": 0.8619,
+      "accuracy": 0.617,
+      "count": 47
+    },
+    {
+      "bin": "0.9-1.0",
+      "mean_confidence": 0.9083,
+      "accuracy": 1.0,
+      "count": 6
+    }
+  ],
+  "n_bins": 10,
+  "n_calibrated_claims": 300,
+  "method": "temperature scaling fitted by minimum NLL on the evaluation sample (T grid search)",
+  "note": "Deploy the fitted temperature via TEMPERATURE in the ML service environment."
+}

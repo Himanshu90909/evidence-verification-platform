@@ -1,0 +1,21 @@
+{
+  "dataset": "copenlu/fever_gold_evidence (FEVER shared task, Wikipedia-derived)",
+  "eval_split": "validation",
+  "n_validation_claims_total": 15935,
+  "n_retrieval_claims": 500,
+  "n_nli_claims": 300,
+  "n_ablation_claims": 100,
+  "models": {
+    "pipeline": "hybrid-bm25-dense-nli",
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "nli_model": "cross-encoder/nli-deberta-v3-small",
+    "retriever": "bm25 (BM25Okapi) + dense (MiniLM/FAISS, cosine) fused with RRF"
+  },
+  "min_evidence_prob": 0.35,
+  "top_k": 5,
+  "seed": 42,
+  "pipeline_version": "1.0.0",
+  "timestamp": "2026-10-19T16:37:32.051115+00:00",
+  "temperature": 4.0,
+  "wall_time_seconds": 773.1
+}
