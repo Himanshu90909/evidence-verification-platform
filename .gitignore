@@ -39,3 +39,4 @@ Thumbs.db
 
 # Coverage
 coverage/
+web/.env.local

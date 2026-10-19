@@ -29,10 +29,28 @@ async function seedEvidenceSources() {
   console.log("evidence source seeded");
 }
 
+/**
+ * Result files live in research/results (research mode). On Vercel only the
+ * web/ directory is uploaded, so the synced copy in web/public/research is
+ * used as a fallback source. Values are always REAL experiment outputs.
+ */
+function findResultsDir(): string | null {
+  const candidates = [
+    process.env.RESEARCH_RESULTS_DIR ?? "",
+    join(__dirname, "..", "..", "research", "results"),
+    join(__dirname, "..", "research", "results"),
+    join(__dirname, "..", "public", "research"),
+  ].filter(Boolean);
+  for (const dir of candidates) {
+    if (existsSync(dir)) return dir;
+  }
+  return null;
+}
+
 async function seedExperiments() {
-  const resultsDir = join(__dirname, "..", "..", "research", "results");
-  if (!existsSync(resultsDir)) {
-    console.log("no research/results directory - skipping experiment seeding");
+  const resultsDir = findResultsDir();
+  if (!resultsDir) {
+    console.log("no research results directory - skipping experiment seeding");
     return;
   }
   const files = readdirSync(resultsDir).filter((f) => f.endsWith(".json"));
