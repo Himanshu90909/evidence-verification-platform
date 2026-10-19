@@ -196,7 +196,31 @@ docker run -d -p 8000:8000 -v evp_data:/data \
 - Deploy anywhere with Docker: Railway, Render, Fly.io, ECS, or a GPU-less VPS. Point `ML_API_URL` at its HTTPS endpoint and set the same key in `MODEL_SERVICE_KEY` on Vercel.
 - Paths are fully configurable via env (`CORPUS_PATH`, `INDEX_DIR`) — no hard-coded OS paths.
 
-### Hugging Face Spaces (recommended free option)
+### Modal (recommended free option)
+
+[Modal](https://modal.com) serves the **exact same FastAPI application** via
+`@modal.asgi_app` — identical code path to the research pipeline, no porting.
+The Starter plan is $0/month with $30 of compute credits; each CPU verification
+costs roughly $0.0003, so the free credit covers ~100k requests. The container
+scales to zero when idle; cold start is ~20-30s (models and indexes are baked
+into the image, and `web/src/lib/ml-client.ts` uses a 90s timeout to absorb it).
+
+```bash
+cd ml-service
+pip install modal
+# from modal.com -> Settings -> API tokens
+export MODAL_TOKEN_ID=... MODAL_TOKEN_SECRET=...
+export MODEL_SERVICE_KEY=<shared-secret>
+python3 scripts/deploy_modal.py
+```
+
+Set the printed URL as `ML_API_URL` in Vercel and redeploy the web app.
+
+### Hugging Face Spaces (requires HF Pro)
+
+> Free HF accounts can no longer create Docker/Gradio Spaces (402 Payment
+> Required). The one-command script below works with an HF Pro subscription
+> ($9/mo); use Modal instead if you want a free host.
 
 The ML service ships a one-command deploy to a **private HF Space** (Docker SDK,
 free CPU tier, 16 GB RAM — plenty for this workload). The Space bundles the

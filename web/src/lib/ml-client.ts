@@ -133,10 +133,16 @@ async function mlFetch<T>(path: string, init: RequestInit, timeoutMs = 30_000): 
 }
 
 export function mlVerify(claim: string, topK?: number): Promise<MlVerifyResponse> {
-  return mlFetch<MlVerifyResponse>("/verify", {
-    method: "POST",
-    body: JSON.stringify({ claim, top_k: topK, return_evidence: true }),
-  });
+  // 90s: the ML service scales to zero when idle; the first request may pay a
+  // ~20-30s cold start before inference (~2-5s) runs.
+  return mlFetch<MlVerifyResponse>(
+    "/verify",
+    {
+      method: "POST",
+      body: JSON.stringify({ claim, top_k: topK, return_evidence: true }),
+    },
+    90_000
+  );
 }
 
 export function mlRetrieve(

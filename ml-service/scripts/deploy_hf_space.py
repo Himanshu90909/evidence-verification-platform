@@ -105,7 +105,7 @@ def main() -> int:
     repo_id = f"{username}/{space_name}"
 
     print(f"Creating/ensuring Space {repo_id} ...")
-    api.create_repo(repo_id=repo_id, repo_type="space", space_sdk="docker", private=True, exist_ok=True)
+    api.create_repo(repo_id=repo_id, repo_type="space", space_sdk="docker", private=os.environ.get("SPACE_PRIVATE", "0") == "1", exist_ok=True)
 
     readme = f"""---
 title: Evidence Verification ML Service

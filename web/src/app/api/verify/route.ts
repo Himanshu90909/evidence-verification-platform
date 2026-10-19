@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+
+// 60s: ML cold starts + inference can exceed the 10s default (Vercel Hobby max).
+export const maxDuration = 60;
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
